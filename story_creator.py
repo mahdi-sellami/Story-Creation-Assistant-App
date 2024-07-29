@@ -50,4 +50,10 @@ if prompt := st.chat_input("Write your answer here..."):
     with st.chat_message("assistant"):
         st.markdown("Thanks for your input 🙏", unsafe_allow_html=True)
 
+# Sidebar Features
+with st.sidebar:
+    tab1, tab2, tab3 = st.tabs(
+        ["Characters", "Environment", "Outline"]
+    )
+
 
