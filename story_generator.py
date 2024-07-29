@@ -120,7 +120,7 @@ def generate_story(model, length, fiction_level, reality_level, informativeness,
     
     openai.api_key = OPENAI_API_KEY
 
-    response = openai.ChatCompletion.create(
+    response = openai.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": "You are a creative story writer."},
@@ -129,7 +129,7 @@ def generate_story(model, length, fiction_level, reality_level, informativeness,
         max_tokens=500
     )
     
-    story = response['choices'][0]['message']['content'].strip()
+    story = response.choices[0].message.content.strip()
 
     log_story(prompt, story, story_title)
     
