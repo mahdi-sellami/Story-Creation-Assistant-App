@@ -106,7 +106,7 @@ def generate_story(model, length, fiction_level, reality_level, informativeness,
     
     openai.api_key = OPENAI_API_KEY
 
-    response = openai.ChatCompletion.create(
+    response = openai.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": "You are a creative story writer."},
@@ -135,23 +135,9 @@ def split_story_into_segments(story):
 def left(s, amount):
     return s[:amount]
 
-def generate_book_cover(story, story_title, moral_theme):
-    openai.api_key = OPENAI_API_KEY
-
-    prompt = f"Generate a hand-drawn illustration for a story titled '{story_title}' with the theme of {moral_theme}. Don't include any text in the image! Here is part of the story: {left(story, 3000)}"
-    
-    response = openai.Image.create(
-        model="dall-e-3",
-        prompt=prompt,
-        n=1
-    )
-
-    image_url = response['data'][0]['url']
-    return image_url
-
 def postscriptum_generator(story, story_title, length, fiction_level, reality_level, informativeness, moral_theme, ip_avoidance, num_characters):
         ps_prompt = f"Provide an analysis of the story in tabular format with columns 'parameter' and 'description', describing how each parameter is addressed in the story titled '{story_title}' with the following parameters: length = {length}, fiction level = {fiction_level}, reality level = {reality_level}, informativeness = {informativeness}, moral theme = {moral_theme}, IP avoidance = {ip_avoidance}, and number of characters = {num_characters}. Here is the story: {story}"
-        ps_response = openai.ChatCompletion.create(
+        ps_response = openai.chat.completions.create(
             model="gpt-4o-2024-05-13",
             messages=[
                 {"role": "system", "content": "You are a story analyzer assistant."},
@@ -159,5 +145,5 @@ def postscriptum_generator(story, story_title, length, fiction_level, reality_le
             ],
             max_tokens=2000
         )
-        ps_content = ps_response['choices'][0]['message']['content'].strip()
+        ps_content = ps_response.choices[0].message.content.strip()
         return ps_content

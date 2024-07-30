@@ -5,7 +5,7 @@ import numpy as np
 import logging
 import cv2
 
-from story_generator import generate_story, log_story, analyze_pacing, get_logged_stories, generate_book_cover, postscriptum_generator
+from story_generator import generate_story, log_story, analyze_pacing, get_logged_stories, postscriptum_generator
 from ui_elements import display_ui, display_story_segments, display_analysis_options
 import streamlit.components.v1 as components
 
@@ -159,15 +159,9 @@ if st.button("Generate Story"):
         img = plot_pacing(pacing_scores)
         components.html(f'<img src="data:image/png;base64,{img}" alt="Pacing Analysis">')
 
-    # Generate and display the book cover
-    book_cover_url = generate_book_cover(story, story_title, moral_theme)
-    st.session_state.book_cover_url = book_cover_url
-
     with st.sidebar:
         with tab3:
             st.write("### Book Cover")
-            if book_cover_url:
-                st.image(book_cover_url, use_column_width=True)
 
             postscriptum = postscriptum_generator(story, story_title, length, fiction_level, reality_level, informativeness, moral_theme, ip_avoidance, num_characters)
 
