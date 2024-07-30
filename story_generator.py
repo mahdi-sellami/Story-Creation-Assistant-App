@@ -108,8 +108,9 @@ def map_user_inputs(length, fiction_level, reality_level, informativeness, ip_av
 def construct_prompt(length, fiction_level, reality_level, informativeness, moral_theme, ip_avoidance, num_characters):
     prompt_parts = map_user_inputs(length, fiction_level, reality_level, informativeness, ip_avoidance)
     
-    prompt = "Write a short story with the following parameters:\n"
-    prompt += "".join(prompt_parts)
+    # prompt = "Write a short story with the following parameters:\n"
+    prompt = ""
+    prompt += "".join(prompt_parts[1:])
     prompt += f"The story should convey the theme of {moral_theme}.\n"
     prompt += f"The story features {num_characters} main characters.\n"
     

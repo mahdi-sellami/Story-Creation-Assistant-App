@@ -479,39 +479,44 @@ def router(state):
         return "continue"
 
 
-graph = StateGraph(State)
-graph.set_conditional_entry_point(router)
-graph.add_node("first", write_first_chapter)
-graph.add_node("rewrite", edit_chapter)
-graph.add_node("continue", continue_chapter)
-graph.add_edge("first", END)
-graph.add_edge("rewrite", END)
-graph.add_edge("continue", END)
+builder = StateGraph(State)
+builder.set_conditional_entry_point(router)
+builder.add_node("first", write_first_chapter)
+builder.add_node("rewrite", edit_chapter)
+builder.add_node("continue", continue_chapter)
+builder.add_edge("first", END)
+builder.add_edge("rewrite", END)
+builder.add_edge("continue", END)
 
 memory = MemorySaver()
-graph = graph.compile(checkpointer=memory)
+graph = builder.compile(checkpointer=memory)
 
 
 if __name__ == "__main__":
     thread = {"configurable": {"thread_id": "1"}}
 
-    for s in graph.stream({"instruction": "A story about a detective", "details": "a detective named Sherlock Holmes"}, thread, stream_mode="values"):
-        if "__end__" not in s:
-            print(s)
-            print("----")
+    response = graph.invoke({"instruction": "A story about a detective", "details": "a detective named Sherlock Holmes"}, thread)
+    chapter_graph = response.get("chapter_graph")
+    for chapter_id, chapter in chapter_graph.items():
+        print(type(chapter))
+        print(chapter)
+        # content = chapter.get("content")
+        # print(content)
+
+
+
 
 
     graph.update_state(thread, {"continue_instructions": "continue with the story"})
 
-    for s in graph.stream({"continue_instructions": "continue with the story"}, thread,  stream_mode="values"):
-        if "__end__" not in s:
-            print(s)
-            print("----")
+    
+    response = graph.invoke({"continue_instructions": "continue with the story"}, thread)
+    print(response)
+
 
     graph.update_state(thread, {"continue_instructions": "continue with the story"})
 
-    for s in graph.stream({"continue_instructions": "continue with the story"}, thread,  stream_mode="values"):
-        if "__end__" not in s:
-            print(s)
-            print("----")
+    
+    response = graph.invoke({"rewrite_instructions": "change the current location to Munich"}, thread)
+    print(response)
 
