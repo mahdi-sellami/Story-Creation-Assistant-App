@@ -76,8 +76,8 @@ if prompt := st.chat_input("Write your answer here..."):
     with st.chat_message("assistant"):        
         message_placeholder = st.empty()        
         if assistant_response.status_code == 200:            
-            message_placeholder.markdown(assistant_response.json()["answer"], unsafe_allow_html=True)            
-            st.session_state.messages.append({"role": "assistant", "content": assistant_response.json()["answer"]})        
+            message_placeholder.markdown(assistant_response.json()["content"], unsafe_allow_html=True)            
+            st.session_state.messages.append({"role": "assistant", "content": assistant_response.json()["content"]})        
         else:            
             message_placeholder.error(f"Failed to get a response from the server: {assistant_response.status_code}") 
 
