@@ -33,8 +33,9 @@ async def query():
     return assistant_response
 
 @router.get("/stream/")
-async def stream(instruction: str, details: str):
-    response = graph.invoke({"instruction": instruction, "details": details}, thread)
+async def stream(instruction: str, details: str, personas: dict, graph=graph):
+    graph = builder.compile(checkpointer=memory)
+    response = graph.invoke({"instruction": instruction, "details": details, "personas": personas}, thread)
     chapter_graph = response.get("chapter_graph")
     for chapter_id, chapter in chapter_graph.items():
         return chapter

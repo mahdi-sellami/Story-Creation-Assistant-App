@@ -60,6 +60,8 @@ def update_chapter_graph(old_chapter_graph, new_chapter_graph):
 
 
 class State(TypedDict):
+    personas: dict[str, str]
+    """Different personas for different tasks."""
     instruction: str
     """Summary user passes in at beginning of story."""
     details: str
@@ -104,7 +106,7 @@ character_description_writer_messages = [
         "You are tasked with writing character descriptions. Your goal is to write detailed \
     descriptions of characters in a story. You should include physical appearance, personality traits, motivations, \
     and relationships with other characters. Your descriptions should be vivid and engaging, providing a clear picture \
-    of each character for the reader.",
+    of each character for the reader. Do only produce characters that {persona} has not used before.",
     ),
     ("human", "{context_request}"),
 ]
@@ -119,7 +121,7 @@ environment_description_writer_messages = [
         "You are tasked with writing environment descriptions for the entire story. Your goal is to write vivid \
     descriptions of settings and environments in a story. You should include sensory details, atmosphere, and the \
     emotional impact of the setting on characters. Your descriptions should transport the reader to the location, \
-    creating a rich and immersive reading experience.",
+    creating a rich and immersive reading experience. Do only create environment that {persona} has not used before.",
     ),
     ("human", "{context_request}"),
 ]
@@ -134,7 +136,7 @@ brainstormer_messages = [
         "You are tasked with brainstorming ideas for \
     a chapter in a story. You should brainstorm ideas relevant to the plotline and in accordance with \
      the users wishes and general plot for the next chapter. You should brainstorm multiple ideas for what the chapter could \
-     be about, making detailed descriptions of all your ideas. Do not return anything other than a numbered list of ideas.",
+     be about, making detailed descriptions of all your ideas. Do only produce ideas that {persona} has not used before. Do not return anything other than a numbered list of ideas.",
     ),
     ("human", "{summary_request}"),
     ("human", "{context_request}"),
@@ -284,7 +286,7 @@ def write_chapter(user_message, chapters_summary, state):
             "action": user_message,
             "summary_request": state["summary_request"],
             "context_request": state["context_request"],
-            "persona": "Lev Tolstoy",
+            "persona": state["personas"]["brainstorm"],
         }
     )
     outline = chapter_outline_chain.invoke(
@@ -294,7 +296,7 @@ def write_chapter(user_message, chapters_summary, state):
             "summary_request": state["summary_request"],
             "context_request": state["context_request"],
             "brainstorm_ideas": brainstorm_ideas,
-            "persona": "Cristopher Nolan",
+            "persona": state["personas"]["outline"],
         }
     )
 
@@ -305,7 +307,7 @@ def write_chapter(user_message, chapters_summary, state):
             "summary_request": state["summary_request"],
             "context_request": state["context_request"],
             "outline": outline,
-            "persona": "Fyodor Dostoevsky",
+            "persona": state["personas"]["chapter"],
         }
     )
     chapter_content = response
@@ -329,14 +331,14 @@ def write_background(state):
     character_description = character_description_chain.invoke(
         {
             "context_request": state["context_request"],
-            "persona": "J. K. Rowling",
+            "persona": state["personas"]["character"],
         }
     )
 
     environment_description = environment_description_chain.invoke(
         {
             "context_request": state["context_request"],
-            "persona": "H. P. Lovecraft",
+            "persona": state["personas"]["environment"],
         }
     )
 
@@ -494,8 +496,9 @@ graph = builder.compile(checkpointer=memory)
 
 if __name__ == "__main__":
     thread = {"configurable": {"thread_id": "1"}}
-
-    response = graph.invoke({"instruction": "A story about a detective", "details": "a detective named Sherlock Holmes"}, thread)
+    
+    personas = {"character": "J. K. Rowling", "environment": "H. P. Lovecraft", "brainstorm": "Lev Tolstoy", "outline": "Cristopher Nolan", "chapter": "Fyodor Dostoevsky"}
+    response = graph.invoke({"instruction": "A story about a sailor", "details": "a story should have three main characters", "personas": personas}, thread)
     chapter_graph = response.get("chapter_graph")
     for chapter_id, chapter in chapter_graph.items():
         print(type(chapter))
