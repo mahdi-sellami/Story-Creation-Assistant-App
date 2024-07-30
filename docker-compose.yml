@@ -5,7 +5,7 @@ services:
     volumes:
       - .:/code
     ports:
-      - "8003:8000"
+      - "8000:8000"
 
   streamlit:
     build: .

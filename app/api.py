@@ -39,7 +39,7 @@ class StreamRequest(BaseModel):
     details: str
     personas: Dict[str, str]  # Dictionary of string keys and string values
 
-@router.get("/stream/")
+@router.post("/stream/")
 async def stream(request: StreamRequest, graph=graph):
     graph = builder.compile(checkpointer=memory)
     response = graph.invoke({"instruction": request.instruction, "details": request.details, "personas":request.personas}, thread)

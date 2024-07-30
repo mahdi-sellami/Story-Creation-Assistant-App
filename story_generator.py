@@ -4,7 +4,6 @@ import json
 import os
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 import io
 import base64
 
@@ -46,20 +45,6 @@ def analyze_pacing(story):
 
     return pacing_scores
 
-def plot_pacing(pacing_scores):
-    fig, ax = plt.subplots()
-    ax.plot(pacing_scores, marker='o')
-    ax.set_title('Story Pacing Analysis')
-    ax.set_xlabel('Paragraph')
-    ax.set_ylabel('Pacing Score')
-
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    img = base64.b64encode(buf.read()).decode('utf-8')
-    plt.close(fig)
-
-    return img
 
 
 def map_user_inputs(length, fiction_level, reality_level, informativeness, ip_avoidance):

@@ -1,10 +1,11 @@
 import streamlit as st
+import requests
 import pandas as pd
 import numpy as np
 import logging
 import cv2
 
-from story_generator import generate_story, log_story, analyze_pacing, plot_pacing, get_logged_stories, generate_book_cover, postscriptum_generator
+from story_generator import generate_story, log_story, analyze_pacing, get_logged_stories, generate_book_cover, postscriptum_generator
 from ui_elements import display_ui, display_story_segments, display_analysis_options
 import streamlit.components.v1 as components
 
@@ -31,6 +32,14 @@ image = cv2.imread(path)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGBA)
 im_1 = st.image(image, width=75)
 
+personas = {
+        "character": "J. K. Rowling",
+        "environment": "H. P. Lovecraft",
+        "brainstorm": "Lev Tolstoy",
+        "outline": "Cristopher Nolan",
+        "chapter": "Fyodor Dostoevsky"
+    }
+
 st.title('Story Creation Assistant')
 
 st.write("Hello! My name is DELIRIA. People often say that I am delirious, I prefer to say that I am creative 👩‍🎨")
@@ -42,9 +51,35 @@ if prompt := st.chat_input("Write your answer here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt, unsafe_allow_html=True)
-    st.session_state.messages.append({"role": "assistant", "content": "Thanks for your input 🙏"})
-    with st.chat_message("assistant"):
-        st.markdown("Thanks for your input 🙏", unsafe_allow_html=True)
+
+    # Perform API call
+    assistant_response = None    
+    try:        
+        # assistant_response = requests.get(        
+        #     "http://api:8000/api/query/",        
+        #     params={"text_query": prompt},        
+        #     timeout=config.ASSISTANT_TIMEOUT,        
+        # )        
+        assistant_response = requests.post("http://api:8000/stream/", json={"instruction": prompt, "details": "test", "personas": personas}, timeout=1800,)        
+        assistant_response.raise_for_status()  
+        # Raises a HTTPError for bad responses   
+    except requests.exceptions.HTTPError as e:        
+        st.error(f"Server returned an error: {e.response.status_code}, {e.response.text}")    
+    except requests.exceptions.ConnectionError:        
+        st.error("Failed to connect to the server. Please check your connection.")    
+    except requests.exceptions.Timeout:        
+        st.error("Server took too long to respond. Please try again later.")    
+    except requests.exceptions.RequestException as e:        
+        st.error(f"An error occurred: {e}")
+
+    # Display assistant response in chat message container    
+    with st.chat_message("assistant"):        
+        message_placeholder = st.empty()        
+        if assistant_response.status_code == 200:            
+            message_placeholder.markdown(assistant_response.json()["answer"], unsafe_allow_html=True)            
+            st.session_state.messages.append({"role": "assistant", "content": assistant_response.json()["answer"]})        
+        else:            
+            message_placeholder.error(f"Failed to get a response from the server: {assistant_response.status_code}") 
 
 with st.sidebar:
     tab1, tab2, tab3 = st.tabs(["Customization", "Agent Configuration", "Worldbuilding"])
@@ -86,11 +121,11 @@ with st.sidebar:
     }
     
         # Create input fields for each role with initial values from personas dictionary
-        character_input = st.text_input("Character Designer", placeholder="Enter new character")
-        environment_input = st.text_input("Environment Designer", placeholder="Enter new environment")
-        brainstorm_input = st.text_input("Brainstorm", placeholder="Enter new brainstorm strategy")
-        outline_input = st.text_input("Outline Writer", placeholder="Enter new outline approach")
-        chapter_input = st.text_input("Script Writer", placeholder="Enter new chapter style")
+        character_input = st.text_input("Character Designer", value=personas.get("character"))
+        environment_input = st.text_input("Environment Designer", value=personas.get("environment"))
+        brainstorm_input = st.text_input("Brainstorm", value=personas.get("brainstorm"))
+        outline_input = st.text_input("Outline Writer", value=personas.get("outline"))
+        chapter_input = st.text_input("Script Writer", value=personas.get("chapter"))
 
         # Button to confirm the configuration
         if st.button("Confirm Configuration"):
