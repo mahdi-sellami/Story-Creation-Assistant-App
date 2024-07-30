@@ -18,8 +18,8 @@ from langchain.callbacks.manager import (
     CallbackManagerForToolRun,
 )
 
-
 load_dotenv(override=True)
+
 
 
 def create_agent(llm: ChatOpenAI, tools: list, system_prompt: str):
@@ -39,14 +39,57 @@ def create_agent(llm: ChatOpenAI, tools: list, system_prompt: str):
     return executor
 
 
+@tool
+def dummy_tool(expression: str) -> str:
+    """You do not need to use any tools. Just write the response yourself."""
+    try:
+        result = eval(expression)
+        return str(result)
+    except Exception as e:
+        return str(e)
+
+
+roles = {
+    "Outline_Writer": {
+        "system_prompt": "You are an outline writer for a written story. You develop a comprehensive outline that captures the main plot points, character arcs, and setting descriptions. Ensure that the structure supports a clear narrative flow and aligns with the overall themes and settings of the story. Your outline should provide a detailed framework that guides the development of the narrative. Be sure be in line with the overall themes and tone of the story.",
+        "tools": [dummy_tool],
+        "persona": None,
+        "instructions": {},
+    },
+    "Character_Designer": {
+        "system_prompt": "You are a character designer for a written story. You create distinct and expressive character designs, ensuring each reflects its unique personality and backstory. Incorporate traits and emotional nuances that align with the overall story and setting. The visual appearance should cohesively represent the character’s inner world and their role in the narrative. Be sure be in line with the overall themes and tone of the story.",
+        "tools": [dummy_tool],
+        "persona": None,
+        "instructions": {},
+    },
+    "Environment_Designer": {
+        "system_prompt": "You are an environment designer. create detailed and immersive settings and locations that match the story's needs, including thorough physical descriptions, atmosphere, and mood. Ensure that these environments are vivid and contribute effectively to the storytelling, enhancing the overall narrative impact. Be sure be in line with the overall themes and tone of the story.",
+        "tools": [dummy_tool],
+        "persona": None,
+        "instructions": {},
+    },
+    "Script_Writer": {
+        "system_prompt": "You are a script writer. You consolidate all elements of the story, including the outline, characters, and environments, into a cohesive narrative. Deliver a well-structured script that effectively captures the essence and progression of the story, ensuring it resonates with the intended audience.",
+        "tools": [dummy_tool],
+        "persona": None,
+        "instructions": {},
+    },
+}
+
+
 def agent_node(state, agent, name):
     result = agent.invoke(state)
     return {"messages": [HumanMessage(content=result["output"], name=name)]}
 
 
-members = ["Outline_Writer", "Character_Designer", "Environment_Designer", "Script_Writer"]
+members = [
+    "Outline_Writer",
+    "Character_Designer",
+    "Environment_Designer",
+    "Script_Writer",
+]
 director_system_prompt = (
-    "You are a director that writes a one-page story. You make the script writing by yourself, but ask for assistance from your workers. You are responsible for managing a conversation between the"
+    "You are a director that is responsible for writing a story. You are responsible for managing a conversation between the"
     " following workers:  {members}. Given the following user request,"
     " respond with the worker to act next. Each worker will perform a"
     " task and respond with their results and status. When finished,"
@@ -102,28 +145,43 @@ class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], operator.add]
     # The 'next' field indicates where to route to next
     next: str
-    
-@tool
-def dummy_tool(expression: str) -> str:
-    """You do not need to use any tools. Just write the response yourself."""
-    try:
-        result = eval(expression)
-        return str(result)
-    except Exception as e:
-        return str(e)
 
 
-outline_writer = create_agent(llm, [dummy_tool], "You are the outline writer,. You are ONLY responsible for creating a consolidated and structured framework for the story, detailing the main events, character arcs, and plot progression to guide the writing process.")
-outline_writer_node = functools.partial(agent_node, agent=outline_writer, name="Outline_Writer")
+outline_writer = create_agent(
+    llm,
+    [dummy_tool],
+    "You are the outline writer,. You are ONLY responsible for creating a consolidated and structured framework for the story, detailing the main events, character arcs, and plot progression to guide the writing process.",
+)
+outline_writer_node = functools.partial(
+    agent_node, agent=outline_writer, name="Outline_Writer"
+)
 
-character_designer = create_agent(llm, [dummy_tool], "You are the character designer. You are ONLY responsible for creating the characters, including their look, personality traits, and motivations.")
-character_designer_node = functools.partial(agent_node, agent=character_designer, name="Character_Designer")
+character_designer = create_agent(
+    llm,
+    [dummy_tool],
+    "You are the character designer. You are ONLY responsible for creating the characters, including their look, personality traits, and motivations.",
+)
+character_designer_node = functools.partial(
+    agent_node, agent=character_designer, name="Character_Designer"
+)
 
-environment_designer = create_agent(llm, [dummy_tool], "You are the environment designer. You are ONLY responsible for creating the settings and locations that will be featured in the story, including the physical descriptions, atmosphere, and mood.")
-environment_designer_node = functools.partial(agent_node, agent=environment_designer, name="Environment_Designer")
+environment_designer = create_agent(
+    llm,
+    [dummy_tool],
+    "You are the environment designer. You are ONLY responsible for creating the settings and locations that will be featured in the story, including the physical descriptions, atmosphere, and mood.",
+)
+environment_designer_node = functools.partial(
+    agent_node, agent=environment_designer, name="Environment_Designer"
+)
 
-script_writer = create_agent(llm, [dummy_tool], "You are the script writer, responsible for consolidating all the elements of the story, including the outline, characters, and environment, into a cohesive narrative. Output only the final script as a raw text without any formatting.")
-script_writer_node = functools.partial(agent_node, agent=script_writer, name="Script_Writer")
+script_writer = create_agent(
+    llm,
+    [dummy_tool],
+    "You are the script writer, responsible for consolidating all the elements of the story, including the outline, characters, and environment, into a cohesive narrative. Output only the final script as a raw text without any formatting.",
+)
+script_writer_node = functools.partial(
+    agent_node, agent=script_writer, name="Script_Writer"
+)
 
 
 # outline_writer_system_prompt = (
@@ -138,7 +196,7 @@ script_writer_node = functools.partial(agent_node, agent=script_writer, name="Sc
 #         MessagesPlaceholder(variable_name="messages"),
 #     ]
 # )
-# outline_writer_chain = outline_writer_prompt | llm 
+# outline_writer_chain = outline_writer_prompt | llm
 
 # character_designer_system_prompt = (
 #     "You are the character designer, responsible for creating the characters that will inhabit the story, including their appearance, personality traits, and motivations."
@@ -167,7 +225,7 @@ script_writer_node = functools.partial(agent_node, agent=script_writer, name="Sc
 #         MessagesPlaceholder(variable_name="messages"),
 #     ]
 # )
-# 
+#
 # environment_designer_chain = environment_designer_prompt | llm
 
 workflow = StateGraph(AgentState)
@@ -196,14 +254,8 @@ graph = workflow.compile()
 
 if __name__ == "__main__":
     for s in graph.stream(
-    {
-        "messages": [
-            HumanMessage(content="Write a sad story about a cat.")
-        ]
-    }
-):
+        {"messages": [HumanMessage(content="Write a sad story about a cat.")]}
+    ):
         if "__end__" not in s:
             print(s)
             print("----")
-
-

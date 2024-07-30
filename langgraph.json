@@ -1,0 +1,10 @@
+{
+    "python_version": "3.11",
+    "dependencies": [
+      "."
+    ],
+    "graphs": {
+      "agent": "./langgraph-assistant/multi-agent-system-v2.py:graph"
+    },
+    "env": ".env"
+  }
