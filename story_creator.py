@@ -4,7 +4,7 @@ import numpy as np
 import logging
 import cv2
 
-from story_generator import generate_story, log_story, analyze_pacing, plot_pacing, get_logged_stories, generate_book_cover
+from story_generator import generate_story, log_story, analyze_pacing, plot_pacing, get_logged_stories, generate_book_cover, postscriptum_generator
 from ui_elements import display_ui, display_story_segments, display_analysis_options
 import streamlit.components.v1 as components
 
@@ -31,7 +31,7 @@ image = cv2.imread(path)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGBA)
 im_1 = st.image(image, width=75)
 
-st.title('(Fictional) Story Creation Assistant')
+st.title('Story Creation Assistant')
 
 st.write("Hello! My name is DELIRIA. People often say that I am delirious, I prefer to say that I am creative 👩‍🎨")
 st.write("Today I will assist you to write a (fictional) story. Let's get creative together! ✍️")
@@ -47,7 +47,7 @@ if prompt := st.chat_input("Write your answer here..."):
         st.markdown("Thanks for your input 🙏", unsafe_allow_html=True)
 
 with st.sidebar:
-    tab1, tab2, tab3 = st.tabs(["Customization", "Agent Configuration", "Image and Audio"])
+    tab1, tab2, tab3 = st.tabs(["Customization", "Agent Configuration", "Worldbuilding"])
 
     with tab1:
         st.write("## Story Parameters")
@@ -78,12 +78,6 @@ with st.sidebar:
         st.write("Agent Configuration")
         # Add agent configuration elements here
 
-    with tab3:
-        st.write("Image and Audio")
-        if "book_cover_url" in st.session_state:
-            st.image(st.session_state.book_cover_url, caption="Generated Book Cover", use_column_width=True)
-        # Add image and audio configuration elements here
-
 # Main section for story generation and modification
 if st.button("Generate Story"):
     if not story_title:
@@ -106,3 +100,18 @@ if st.button("Generate Story"):
         st.write("Pacing scores per paragraph:", pacing_scores)
         img = plot_pacing(pacing_scores)
         components.html(f'<img src="data:image/png;base64,{img}" alt="Pacing Analysis">')
+
+    # Generate and display the book cover
+    book_cover_url = generate_book_cover(story, story_title, moral_theme)
+    st.session_state.book_cover_url = book_cover_url
+
+    with st.sidebar:
+        with tab3:
+            st.write("### Book Cover")
+            if book_cover_url:
+                st.image(book_cover_url, use_column_width=True)
+
+            postscriptum = postscriptum_generator(story, story_title, length, fiction_level, reality_level, informativeness, moral_theme, ip_avoidance, num_characters)
+
+            st.write("### Analysis")
+            st.write(postscriptum)
