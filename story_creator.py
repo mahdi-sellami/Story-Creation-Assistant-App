@@ -76,7 +76,30 @@ with st.sidebar:
 
     with tab2:
         st.write("Agent Configuration")
-        # Add agent configuration elements here
+        
+        personas = {
+        "character": "J. K. Rowling",
+        "environment": "H. P. Lovecraft",
+        "brainstorm": "Lev Tolstoy",
+        "outline": "Cristopher Nolan",
+        "chapter": "Fyodor Dostoevsky"
+    }
+    
+        # Create input fields for each role with initial values from personas dictionary
+        character_input = st.text_input("Character Designer", placeholder="Enter new character")
+        environment_input = st.text_input("Environment Designer", placeholder="Enter new environment")
+        brainstorm_input = st.text_input("Brainstorm", placeholder="Enter new brainstorm strategy")
+        outline_input = st.text_input("Outline Writer", placeholder="Enter new outline approach")
+        chapter_input = st.text_input("Script Writer", placeholder="Enter new chapter style")
+
+        # Button to confirm the configuration
+        if st.button("Confirm Configuration"):
+            # Update personas dictionary with the new inputs
+            personas["character"] = character_input
+            personas["environment"] = environment_input
+            personas["brainstorm"] = brainstorm_input
+            personas["outline"] = outline_input
+            personas["chapter"] = chapter_input
 
 # Main section for story generation and modification
 if st.button("Generate Story"):

@@ -8,7 +8,9 @@ import logging
 from pathlib import Path
 import config
 import json
+from pydantic import BaseModel, Field
 import datetime
+from typing import Dict
 from assistant.multi_agent_system_v2 import builder
 
 from langgraph.checkpoint.memory import MemorySaver
@@ -32,10 +34,15 @@ async def query():
         
     return assistant_response
 
+class StreamRequest(BaseModel):
+    instruction: str
+    details: str
+    personas: Dict[str, str]  # Dictionary of string keys and string values
+
 @router.get("/stream/")
-async def stream(instruction: str, details: str, personas: dict, graph=graph):
+async def stream(request: StreamRequest, graph=graph):
     graph = builder.compile(checkpointer=memory)
-    response = graph.invoke({"instruction": instruction, "details": details, "personas": personas}, thread)
+    response = graph.invoke({"instruction": request.instruction, "details": request.details, "personas":request.personas}, thread)
     chapter_graph = response.get("chapter_graph")
     for chapter_id, chapter in chapter_graph.items():
         return chapter
